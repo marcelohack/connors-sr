@@ -784,7 +784,9 @@ class SRService(BaseService):
                 raise ValueError("SR method file must be a Python (.py) file")
 
             # Create module spec and load the module
-            module_name = f"external_sr_method_{file_path_obj.stem}_{hash(str(file_path_obj))}"
+            module_name = (
+                f"external_sr_method_{file_path_obj.stem}_{hash(str(file_path_obj))}"
+            )
             spec = importlib.util.spec_from_file_location(module_name, file_path_obj)
             if spec is None or spec.loader is None:
                 raise ImportError(f"Could not load module from {file_path_obj}")

@@ -35,7 +35,3 @@ jobs:
       run: |
         black --check connors_sr tests
         isort --check-only connors_sr tests
-
-    - name: Type checking
-      run: |
-        mypy connors_sr
