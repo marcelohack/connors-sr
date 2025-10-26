@@ -62,8 +62,8 @@ class SRServiceResult:
     """Container for SR service results"""
 
     ticker: str
-    method: SRMethod
-    results: SRResult
+    method: Union[SRMethod, str]
+    results: Optional[SRResult]
     plot_path: Optional[str] = None
     results_path: Optional[str] = None
     success: bool = True
@@ -80,8 +80,8 @@ class SRService(BaseService):
         self.download_service = DataFetchService()
         self.timespan_calculator = TimespanCalculator()
 
-        # Initialize calculators
-        self.calculators = {
+        # Initialize calculators - dict accepts both SRMethod and str keys
+        self.calculators: Dict[Union[SRMethod, str], Any] = {
             SRMethod.PIVOT_POINTS: PivotPointsCalculator(),
             SRMethod.FRACTAL: FractalCalculator(),
             SRMethod.VWAP_ZONES: VWAPZonesCalculator(),
@@ -136,6 +136,7 @@ class SRService(BaseService):
         """
         try:
             # Convert string method to enum for built-in methods, keep as string for external
+            method: Union[SRMethod, str]
             if isinstance(request.method, str):
                 # Check if it's an external method first
                 if request.method in self.calculators:
@@ -260,12 +261,15 @@ class SRService(BaseService):
             raise ValueError(f"Data download failed: {download_result.error}")
 
         # Add ticker attribute to dataframe for reference
-        download_result.data.ticker = request.ticker
+        if download_result.data is not None:
+            download_result.data.ticker = request.ticker  # type: ignore[attr-defined]
 
-        # Normalize column names for SR calculator (expects title case)
-        data = self._prepare_dataframe_for_sr_calculation(download_result.data)
-        data.ticker = request.ticker
-        return data
+            # Normalize column names for SR calculator (expects title case)
+            data = self._prepare_dataframe_for_sr_calculation(download_result.data)
+            data.ticker = request.ticker  # type: ignore[attr-defined]
+            return data
+        else:
+            raise ValueError("Downloaded data is None")
 
     def _load_dataset_file(self, dataset_file: str, ticker: str) -> pd.DataFrame:
         """Load data from a dataset file"""
@@ -681,7 +685,8 @@ class SRService(BaseService):
         """Load a saved SR calculation result"""
         try:
             with open(file_path, "r") as f:
-                return json.load(f)
+                result: Dict[str, Any] = json.load(f)
+                return result
         except Exception as e:
             self.logger.error(f"Failed to load saved result from {file_path}: {e}")
             return None
@@ -771,18 +776,18 @@ class SRService(BaseService):
         from pathlib import Path
 
         try:
-            file_path = Path(file_path)
-            if not file_path.exists():
-                raise FileNotFoundError(f"SR method file not found: {file_path}")
+            file_path_obj = Path(file_path)
+            if not file_path_obj.exists():
+                raise FileNotFoundError(f"SR method file not found: {file_path_obj}")
 
-            if not file_path.suffix == ".py":
+            if not file_path_obj.suffix == ".py":
                 raise ValueError("SR method file must be a Python (.py) file")
 
             # Create module spec and load the module
-            module_name = f"external_sr_method_{file_path.stem}_{hash(str(file_path))}"
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            module_name = f"external_sr_method_{file_path_obj.stem}_{hash(str(file_path_obj))}"
+            spec = importlib.util.spec_from_file_location(module_name, file_path_obj)
             if spec is None or spec.loader is None:
-                raise ImportError(f"Could not load module from {file_path}")
+                raise ImportError(f"Could not load module from {file_path_obj}")
 
             module = importlib.util.module_from_spec(spec)
 
@@ -875,7 +880,7 @@ class SRService(BaseService):
                 class_name, class_obj = method_classes[0]
                 method_name = class_name.lower()
                 self.registry._sr_methods[method_name] = class_obj
-                class_obj._registry_name = method_name
+                class_obj._registry_name = method_name  # type: ignore[attr-defined]
 
                 # Add the method instance to available calculators
                 self.calculators[method_name] = class_obj()

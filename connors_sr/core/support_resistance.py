@@ -8,7 +8,7 @@ Support & Resistance level identification using various market analysis techniqu
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol, cast
 
 import numpy as np
 import pandas as pd
@@ -218,7 +218,7 @@ class PivotPointsCalculator(BaseSRCalculator):
                         support_candidates.append(support_val)
 
             # Group similar support levels and create SR levels
-            support_levels_dict = {}
+            support_levels_dict: Dict[float, List[float]] = {}
             for candidate in support_candidates:
                 # Group levels within 1% of each other
                 grouped = False
@@ -234,7 +234,7 @@ class PivotPointsCalculator(BaseSRCalculator):
             for base_level, group_levels in support_levels_dict.items():
                 if len(group_levels) >= 1:  # At least 1 occurrence
                     avg_level = np.mean(group_levels)
-                    touches = self._count_touches(df, avg_level)
+                    touches = self._count_touches(df, float(avg_level))
 
                     if touches >= 1:  # Must have at least 1 touch
                         levels.append(
@@ -275,7 +275,7 @@ class PivotPointsCalculator(BaseSRCalculator):
                         resistance_candidates.append(resistance_val)
 
             # Group similar resistance levels and create SR levels
-            resistance_levels_dict = {}
+            resistance_levels_dict: Dict[float, List[float]] = {}
             for candidate in resistance_candidates:
                 # Group levels within 1% of each other
                 grouped = False
@@ -291,7 +291,7 @@ class PivotPointsCalculator(BaseSRCalculator):
             for base_level, group_levels in resistance_levels_dict.items():
                 if len(group_levels) >= 1:  # At least 1 occurrence
                     avg_level = np.mean(group_levels)
-                    touches = self._count_touches(df, avg_level)
+                    touches = self._count_touches(df, float(avg_level))
 
                     if touches >= 1:  # Must have at least 1 touch
                         levels.append(
@@ -434,7 +434,7 @@ class FractalCalculator(BaseSRCalculator):
 
             # Process fractal highs as resistance levels
             fractal_highs = df["FractalHigh"].dropna()
-            for timestamp, level_value in fractal_highs.items():
+            for timestamp, level_value in fractal_highs.items():  # type: ignore[assignment]
                 strength = self._calculate_level_strength(df, level_value, "resistance")
                 if strength >= min_strength:
                     levels.append(
@@ -444,15 +444,15 @@ class FractalCalculator(BaseSRCalculator):
                             method=self.method,
                             strength=strength,
                             touches=self._count_touches(df, level_value),
-                            first_occurrence=timestamp,
-                            last_occurrence=timestamp,
+                            first_occurrence=cast(pd.Timestamp, timestamp),
+                            last_occurrence=cast(pd.Timestamp, timestamp),
                             metadata={"fractal_type": "high", "lookback": lookback},
                         )
                     )
 
             # Process fractal lows as support levels
             fractal_lows = df["FractalLow"].dropna()
-            for timestamp, level_value in fractal_lows.items():
+            for timestamp, level_value in fractal_lows.items():  # type: ignore[assignment]
                 strength = self._calculate_level_strength(df, level_value, "support")
                 if strength >= min_strength:
                     levels.append(
@@ -462,8 +462,8 @@ class FractalCalculator(BaseSRCalculator):
                             method=self.method,
                             strength=strength,
                             touches=self._count_touches(df, level_value),
-                            first_occurrence=timestamp,
-                            last_occurrence=timestamp,
+                            first_occurrence=cast(pd.Timestamp, timestamp),
+                            last_occurrence=cast(pd.Timestamp, timestamp),
                             metadata={"fractal_type": "low", "lookback": lookback},
                         )
                     )
@@ -528,21 +528,21 @@ class FractalCalculator(BaseSRCalculator):
             near_level = abs(data["Low"] - level) <= tolerance
             subsequent_bounces = 0
             for i in data[near_level].index:
-                idx = data.index.get_loc(i)
-                if idx < len(data) - 5:  # Look ahead 5 periods
-                    future_low = data["Low"].iloc[idx : idx + 5].min()
-                    if data["Low"].iloc[idx] <= future_low * 1.01:  # Price bounced up
+                idx = data.index.get_loc(i)  # type: ignore[arg-type]
+                if idx < len(data) - 5:  # type: ignore[operator]
+                    future_low = data["Low"].iloc[idx : idx + 5].min()  # type: ignore[misc,operator]
+                    if data["Low"].iloc[idx] <= future_low * 1.01:  # type: ignore[index,operator]
                         subsequent_bounces += 1
         else:
             # Count rejections from resistance level
             near_level = abs(data["High"] - level) <= tolerance
             subsequent_bounces = 0
             for i in data[near_level].index:
-                idx = data.index.get_loc(i)
-                if idx < len(data) - 5:
-                    future_high = data["High"].iloc[idx : idx + 5].max()
+                idx = data.index.get_loc(i)  # type: ignore[arg-type]
+                if idx < len(data) - 5:  # type: ignore[operator]
+                    future_high = data["High"].iloc[idx : idx + 5].max()  # type: ignore[misc,operator]
                     if (
-                        data["High"].iloc[idx] >= future_high * 0.99
+                        data["High"].iloc[idx] >= future_high * 0.99  # type: ignore[index]
                     ):  # Price rejected down
                         subsequent_bounces += 1
 
@@ -622,11 +622,11 @@ class VWAPZonesCalculator(BaseSRCalculator):
             )  # Last 50 high-volume periods
 
             # Process VWAP as pivot level
-            for timestamp, row in significant_data.iterrows():
+            for timestamp, row in significant_data.iterrows():  # type: ignore[assignment]
                 vwap_level = row["VWAP"]
                 if not np.isnan(vwap_level):
                     # Determine if acting as support or resistance based on recent price action
-                    recent_closes = df.loc[:timestamp, "Close"].tail(5)
+                    recent_closes = df.loc[:timestamp, "Close"].tail(5)  # type: ignore[misc,index]
                     if recent_closes.mean() > vwap_level:
                         level_type = "support"
                     else:
@@ -641,8 +641,8 @@ class VWAPZonesCalculator(BaseSRCalculator):
                                 df, vwap_level, row["Volume"], row["AvgVolume"]
                             ),
                             touches=self._count_vwap_touches(df, vwap_level),
-                            first_occurrence=timestamp,
-                            last_occurrence=timestamp,
+                            first_occurrence=cast(pd.Timestamp, timestamp),
+                            last_occurrence=cast(pd.Timestamp, timestamp),
                             metadata={
                                 "level_type": "vwap",
                                 "volume_ratio": row["Volume"] / row["AvgVolume"],
@@ -657,7 +657,7 @@ class VWAPZonesCalculator(BaseSRCalculator):
 
                 # Upper bands as resistance
                 for timestamp, level_value in (
-                    significant_data[upper_col].dropna().items()
+                    significant_data[upper_col].dropna().items()  # type: ignore[assignment]
                 ):
                     levels.append(
                         SRLevel(
@@ -668,15 +668,15 @@ class VWAPZonesCalculator(BaseSRCalculator):
                                 df, level_value, std_dev
                             ),
                             touches=self._count_vwap_touches(df, level_value),
-                            first_occurrence=timestamp,
-                            last_occurrence=timestamp,
+                            first_occurrence=cast(pd.Timestamp, timestamp),
+                            last_occurrence=cast(pd.Timestamp, timestamp),
                             metadata={"level_type": "upper_band", "std_dev": std_dev},
                         )
                     )
 
                 # Lower bands as support
                 for timestamp, level_value in (
-                    significant_data[lower_col].dropna().items()
+                    significant_data[lower_col].dropna().items()  # type: ignore[assignment]
                 ):
                     levels.append(
                         SRLevel(
@@ -687,8 +687,8 @@ class VWAPZonesCalculator(BaseSRCalculator):
                                 df, level_value, std_dev
                             ),
                             touches=self._count_vwap_touches(df, level_value),
-                            first_occurrence=timestamp,
-                            last_occurrence=timestamp,
+                            first_occurrence=cast(pd.Timestamp, timestamp),
+                            last_occurrence=cast(pd.Timestamp, timestamp),
                             metadata={"level_type": "lower_band", "std_dev": std_dev},
                         )
                     )
@@ -768,17 +768,17 @@ class VWAPZonesCalculator(BaseSRCalculator):
         successful_bounces = 0
 
         for i in data[near_touches].index:
-            idx = data.index.get_loc(i)
-            if idx < len(data) - 3:
-                future_prices = data["Close"].iloc[idx : idx + 3]
+            idx = data.index.get_loc(i)  # type: ignore[arg-type]
+            if idx < len(data) - 3:  # type: ignore[operator]
+                future_prices = data["Close"].iloc[idx : idx + 3]  # type: ignore[misc,operator]
                 if len(future_prices) > 1:
                     if abs(future_prices.iloc[0] - level) > abs(
                         future_prices.iloc[-1] - level
                     ):
                         successful_bounces += 1
 
-        bounce_strength = successful_bounces / max(near_touches.sum(), 1)
-        return (volume_strength + bounce_strength) / 2
+        bounce_strength = float(successful_bounces / max(near_touches.sum(), 1))
+        return float((volume_strength + bounce_strength) / 2)
 
     def _calculate_band_strength(
         self, data: pd.DataFrame, level: float, std_dev: float
@@ -792,8 +792,8 @@ class VWAPZonesCalculator(BaseSRCalculator):
         touches = abs(data["High"] - level) <= tolerance
         touches |= abs(data["Low"] - level) <= tolerance
 
-        bounce_strength = min(touches.sum() / 10.0, 1.0)  # Normalize
-        return (base_strength + bounce_strength) / 2
+        bounce_strength = min(float(touches.sum()) / 10.0, 1.0)  # Normalize
+        return float((base_strength + bounce_strength) / 2)
 
     def _count_vwap_touches(self, data: pd.DataFrame, level: float) -> int:
         """Count touches for VWAP levels"""
@@ -846,7 +846,7 @@ class VolumeProfileCalculator(BaseSRCalculator):
             bin_size = price_range / price_bins
 
             # Calculate volume at each price level
-            price_volume_map = {}
+            price_volume_map: Dict[float, float] = {}
 
             for _, row in recent_data.iterrows():
                 # Distribute volume across the trading range for each period
@@ -922,7 +922,8 @@ class VolumeProfileCalculator(BaseSRCalculator):
                     df["Low"] <= level_value + tolerance
                 )
                 df.loc[mask, "VP_Level"] = level_value
-                df.loc[mask, "VP_Volume"] = level_obj.metadata["volume_pct"]
+                if level_obj.metadata is not None:
+                    df.loc[mask, "VP_Volume"] = level_obj.metadata["volume_pct"]
 
             # Add SR columns to dataframe
             result_df = self._add_sr_columns(df, levels, f"_VP{price_bins}")

@@ -81,6 +81,10 @@ module = [
     "pandas.*",
     "numpy.*",
     "plotly.*",
+    "connors_datafetch.*",
+    "connors.core.support_resistance",
+    "talib",
+    "pandas_ta",
 ]
 ignore_missing_imports = true
 
