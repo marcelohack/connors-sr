@@ -12,19 +12,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
 import connors_datafetch.datasources.finnhub  # noqa: F401
 import connors_datafetch.datasources.fmp  # noqa: F401
 import connors_datafetch.datasources.polygon  # noqa: F401
 
 # Import all datasources to ensure registration
 import connors_datafetch.datasources.yfinance  # noqa: F401
+import pandas as pd
+import plotly.graph_objects as go
 from connors_datafetch.config.manager import DataFetchConfigManager
 from connors_datafetch.core.timespan import TimespanCalculator
 from connors_datafetch.services.datafetch_service import DataFetchService
+from plotly.subplots import make_subplots
+
 from connors_sr.core.registry import registry
 from connors_sr.core.support_resistance import (
     FractalCalculator,
@@ -388,7 +388,9 @@ class SRService(BaseService):
             start_date = "unknown"
             end_date = "unknown"
 
-        filename = f"{request.ticker}_{request.market_config}_{start_date}_{end_date}.json"
+        filename = (
+            f"{request.ticker}_{request.market_config}_{start_date}_{end_date}.json"
+        )
         results_path = method_dir / filename
 
         # Prepare results data
@@ -445,7 +447,9 @@ class SRService(BaseService):
             start_date = "unknown"
             end_date = "unknown"
 
-        filename = f"{request.ticker}_{request.market_config}_{start_date}_{end_date}.html"
+        filename = (
+            f"{request.ticker}_{request.market_config}_{start_date}_{end_date}.html"
+        )
         plot_path = plots_dir / filename
 
         # Determine method name for plot title
@@ -790,13 +794,13 @@ class SRService(BaseService):
 
             # Also make sure common imports are available
             try:
-                import pandas as pd
                 import numpy as np
+                import pandas as pd
                 from connors.core.support_resistance import (
                     BaseSRCalculator,
-                    SRResult,
                     SRLevel,
                     SRMethod,
+                    SRResult,
                 )
 
                 module.__dict__["pd"] = pd
@@ -812,12 +816,14 @@ class SRService(BaseService):
 
             try:
                 import talib
+
                 module.__dict__["talib"] = talib
             except ImportError:
                 pass
 
             try:
                 import pandas_ta as ta
+
                 module.__dict__["ta"] = ta
                 module.__dict__["pandas_ta"] = ta
             except ImportError:
@@ -845,7 +851,9 @@ class SRService(BaseService):
                         if (
                             isinstance(attr, type)
                             and hasattr(attr, "__bases__")
-                            and any("SRCalculator" in str(base) for base in attr.__bases__)
+                            and any(
+                                "SRCalculator" in str(base) for base in attr.__bases__
+                            )
                         ):
                             method_classes.append((attr_name, attr))
                     except Exception:
@@ -880,5 +888,7 @@ class SRService(BaseService):
                 return registered_method_name
 
         except Exception as e:
-            self.logger.error(f"Failed to load external SR method from {file_path}: {e}")
+            self.logger.error(
+                f"Failed to load external SR method from {file_path}: {e}"
+            )
             raise
