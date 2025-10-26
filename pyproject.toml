@@ -1,0 +1,100 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "connors-sr"
+version = "0.1.0"
+description = "Support & Resistance Calculator - Standalone package for identifying key price levels"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Marcelo Hack", email = "marcelo@hack.com"},
+]
+keywords = ["trading", "support-resistance", "technical-analysis", "price-levels", "finance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "plotly>=5.17.0",
+    "connors-datafetch>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "black>=23.9.0",
+    "isort>=5.12.0",
+    "mypy>=1.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/marcelohack/connors-sr"
+Repository = "https://github.com/marcelohack/connors-sr"
+Issues = "https://github.com/marcelohack/connors-sr/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["connors_sr*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+"connors_sr" = ["py.typed"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py313']
+include = '\\.pyi?$'
+
+# isort configuration
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["connors_sr"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pandas.*",
+    "numpy.*",
+    "plotly.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+]
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
