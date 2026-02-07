@@ -1,9 +1,0 @@
-# Production dependencies for connors-sr
-# Generated from pyproject.toml [project.dependencies]
-
-pandas>=2.0.0
-numpy>=1.24.0
-plotly>=5.17.0
-
-# Data fetcher (local development package)
-git+https://github.com/marcelohack/connors-datafetch.git@main
