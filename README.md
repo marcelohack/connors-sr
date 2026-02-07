@@ -20,13 +20,23 @@ Support & Resistance calculator with multiple technical analysis methods for ide
 pip install connors-sr
 ```
 
-For development:
+### Local Development
+
+**Prerequisites**: Python 3.13, [pyenv](https://github.com/pyenv/pyenv) + [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv)
 
 ```bash
-git clone https://github.com/marcelohack/connors-sr.git
-cd connors-sr
+# 1. Create and activate a virtual environment
+pyenv virtualenv 3.13 connors-sr
+pyenv activate connors-sr
+
+# 2. Install connors packages from local checkouts (not on PyPI)
+pip install -e ../datafetch
+
+# 3. Install with dev dependencies
 pip install -e ".[dev]"
 ```
+
+A `.python-version` file is included so pyenv auto-activates when you `cd` into this directory.
 
 ## Quick Start
 
