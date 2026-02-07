@@ -1,18 +1,17 @@
-# Connors SR (Support & Resistance Calculator)
+# connors-sr
 
-A standalone Python package for identifying Support & Resistance levels using various technical analysis methods.
+> Part of the [Connors Trading System](https://github.com/marcelohack/connors-playground)
+
+## Overview
+
+Support & Resistance calculator with multiple technical analysis methods for identifying key price levels. Provides a programmatic API and integrates with the playground CLI for interactive analysis.
 
 ## Features
 
-- **Multiple Calculation Methods**:
-  - Pivot Points (Classic, Fibonacci, Camarilla)
-  - Fractal-based levels
-  - VWAP Zones
-  - Volume Profile
-
+- **4 Built-in Methods**: Pivot Points, Fractal Analysis, VWAP Zones, Volume Profile
 - **External Method Support**: Load custom SR calculation methods via decorator pattern
 - **Data Integration**: Works seamlessly with connors-datafetch for market data
-- **Visualization**: Built-in plotly charts for price levels
+- **Visualization**: Built-in Plotly charts for price levels
 - **File Storage**: Save/load calculations in JSON and HTML formats
 
 ## Installation
@@ -22,6 +21,7 @@ pip install connors-sr
 ```
 
 For development:
+
 ```bash
 git clone https://github.com/marcelohack/connors-sr.git
 cd connors-sr
@@ -55,12 +55,54 @@ for level in result.sr_result.levels:
     print(f"{level.level_type}: ${level.level:.2f} (strength: {level.strength:.2f})")
 ```
 
+## CLI Usage
+
+The S/R calculator CLI is part of [connors-playground](https://github.com/marcelohack/connors-playground):
+
+```bash
+# Pivot Points calculation
+python -m connors.cli.sr_calculator --ticker AAPL --method pivot_points --timespan 6M
+
+# Fractal analysis with custom parameters
+python -m connors.cli.sr_calculator --ticker MSFT --method fractal \
+  --method-params "lookback:7;min_strength:0.4"
+
+# VWAP Zones with plotting
+python -m connors.cli.sr_calculator --ticker NVDA --method vwap_zones --timespan YTD --plot
+
+# Volume Profile with results saving
+python -m connors.cli.sr_calculator --ticker TSLA --method volume_profile \
+  --save-results --save-plot
+
+# Show available parameters
+python -m connors.cli.sr_calculator --method pivot_points --show-method-params
+
+# External method
+python -m connors.cli.sr_calculator --ticker AAPL \
+  --external-method ~/.connors/sr_methods/test_sr_method.py \
+  --method-params "calculation_method:ema_bands;ema_period:30" --timespan 3M
+
+# Different markets and data sources
+python -m connors.cli.sr_calculator --ticker BHP --method pivot_points \
+  --market australia --datasource yfinance --timespan 1Y
+
+# Using dataset file
+python -m connors.cli.sr_calculator --ticker CUSTOM --method vwap_zones \
+  --dataset-file my_data.csv --plot
+
+# List methods and saved results
+python -m connors.cli.sr_calculator --list-methods
+python -m connors.cli.sr_calculator --list-saved
+```
+
 ## Available Methods
 
-- `pivot_points`: Classic pivot point calculations
-- `fractal`: Fractal-based support/resistance
-- `vwap_zones`: VWAP-based zones
-- `volume_profile`: Volume profile levels
+| Method | Description | Key Parameters |
+|--------|-------------|----------------|
+| `pivot_points` | Classic pivot point calculations | `period`, `include_midpoints` |
+| `fractal` | Fractal-based support/resistance | `lookback`, `min_strength` |
+| `vwap_zones` | VWAP-based price zones | `period`, `std_devs`, `min_volume_ratio` |
+| `volume_profile` | Volume profile price levels | `price_bins`, `min_volume_pct`, `lookback_periods` |
 
 ## Custom SR Calculators
 
@@ -86,13 +128,29 @@ class MyCustomCalculator(BaseSRCalculator):
         }
 ```
 
-## Dependencies
+## Development
 
-- pandas >= 2.0.0
-- numpy >= 1.24.0
-- plotly >= 5.17.0
-- connors-datafetch >= 0.1.0
+```bash
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=connors_sr
+```
+
+## Related Packages
+
+| Package | Description | Links |
+|---------|-------------|-------|
+| [connors-playground](https://github.com/marcelohack/connors-playground) | CLI + Streamlit UI (integration hub) | [README](https://github.com/marcelohack/connors-playground#readme) |
+| [connors-core](https://github.com/marcelohack/connors-core) | Registry, config, indicators, metrics | [README](https://github.com/marcelohack/connors-core#readme) |
+| [connors-backtest](https://github.com/marcelohack/connors-backtest) | Backtesting service + built-in strategies | [README](https://github.com/marcelohack/connors-backtest#readme) |
+| [connors-strategies](https://github.com/marcelohack/connors-strategies) | Trading strategy collection (private) | — |
+| [connors-screener](https://github.com/marcelohack/connors-screener) | Stock screening system | [README](https://github.com/marcelohack/connors-screener#readme) |
+| [connors-datafetch](https://github.com/marcelohack/connors-datafetch) | Multi-source data downloader | [README](https://github.com/marcelohack/connors-datafetch#readme) |
+| [connors-regime](https://github.com/marcelohack/connors-regime) | Market regime detection | [README](https://github.com/marcelohack/connors-regime#readme) |
+| [connors-bots](https://github.com/marcelohack/connors-bots) | Automated trading bots | [README](https://github.com/marcelohack/connors-bots#readme) |
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT
