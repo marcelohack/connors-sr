@@ -30,6 +30,7 @@ pyenv virtualenv 3.13 connors-sr
 pyenv activate connors-sr
 
 # 2. Install connors packages from local checkouts (not on PyPI)
+pip install -e ../core
 pip install -e ../datafetch
 
 # 3. Install with dev dependencies
